@@ -134,6 +134,72 @@ def get_burst_feature(label_pcap, payload_len):
             f.write(burst_txt)
     return 0
 
+
+
+def extract_alt(pcap_file, filter=None, extension=None):
+    """
+    Alternative to flowcontainer.extractor.extract that provides essential
+    functionality needed by get_feature_flow.
+    
+    Args:
+        pcap_file (str): Path to pcap file
+        filter (str, optional): Protocol filter ('tcp' or 'udp')
+        extension (list, optional): Additional fields to extract (limited support)
+        
+    Returns:
+        dict: Dictionary with flow data, keyed by (pcap_file, protocol, flow_id)
+    """
+    try:
+        packets = scapy.rdpcap(pcap_file)
+    except Exception as e:
+        print(f"Error reading pcap file: {e}")
+        return {}
+    
+    # Dictionary for flows
+    flows = {}
+    
+    # Filter packets by protocol
+    tcp_packets = []
+    udp_packets = []
+    
+    for packet in packets:
+        if scapy.IP in packet:
+            if scapy.TCP in packet and (filter is None or filter == 'tcp'):
+                tcp_packets.append(packet)
+            elif scapy.UDP in packet and (filter is None or filter == 'udp'):
+                udp_packets.append(packet)
+    
+    # Create TCP flow if we have TCP packets
+    if tcp_packets and (filter is None or filter == 'tcp'):
+        flow_key = (pcap_file, 'tcp', '0')
+        flows[flow_key] = FlowData()
+        
+        for packet in tcp_packets:
+            length = len(packet[scapy.IP])
+            flows[flow_key].ip_lengths.append(length)
+    
+    # Create UDP flow if we have UDP packets
+    if udp_packets and (filter is None or filter == 'udp'):
+        flow_key = (pcap_file, 'udp', '0')
+        flows[flow_key] = FlowData()
+        
+        for packet in udp_packets:
+            length = len(packet[scapy.IP])
+            flows[flow_key].ip_lengths.append(length)
+    
+    return flows
+
+
+class FlowData:
+    """Class that mimics flowcontainer.extractor flow data"""
+    
+    def __init__(self):
+        self.ip_lengths = []
+        # Add placeholder for TLS fields support
+        self.tls_record_content_types = []
+        self.tls_record_opaque_types = []
+        self.tls_handshake_types = []
+
 def get_feature_packet(label_pcap,payload_len):
     feature_data = []
 
@@ -141,14 +207,12 @@ def get_feature_packet(label_pcap,payload_len):
     packet_data_string = ''  
 
     for packet in packets:
-            packet_data = packet.copy()
-            data = (binascii.hexlify(bytes(packet_data)))
-            packet_string = data.decode()
-            new_packet_string = packet_string[76:]
-            packet_data_string += bigram_generation(new_packet_string, packet_len=payload_len, flag = True)
-            break
-
-    feature_data.append(packet_data_string)
+        packet_data = packet.copy()
+        data = (binascii.hexlify(bytes(packet_data)))
+        packet_string = data.decode()
+        new_packet_string = packet_string[76:]
+        packet_data_string += bigram_generation(new_packet_string, packet_len=payload_len, flag = True)
+        feature_data.append(packet_data_string)
     return feature_data
 
 def get_feature_flow(label_pcap, payload_len, payload_pac):
@@ -158,9 +222,9 @@ def get_feature_flow(label_pcap, payload_len, payload_pac):
     packet_count = 0  
     flow_data_string = '' 
 
-    feature_result = extract(label_pcap, filter='tcp', extension=['tls.record.content_type', 'tls.record.opaque_type', 'tls.handshake.type'])
+    feature_result = extract_alt(label_pcap, filter='tcp', extension=['tls.record.content_type', 'tls.record.opaque_type', 'tls.handshake.type'])
     if len(feature_result) == 0:
-        feature_result = extract(label_pcap, filter='udp')
+        feature_result = extract_alt(label_pcap, filter='udp')
         if len(feature_result) == 0:
             return -1
         extract_keys = list(feature_result.keys())[0]
@@ -208,47 +272,8 @@ def get_feature_flow(label_pcap, payload_len, payload_pac):
 
     return feature_data
 
-def generation(pcap_path, samples, features, splitcap = False, payload_length = 128, payload_packet = 5, dataset_save_path = "I:\\ex_results\\", dataset_level = "flow"):
-    if os.path.exists(dataset_save_path + "dataset.json"):
-        print("the pcap file of %s is finished generating."%pcap_path)
-        
-        clean_dataset = 0
-        
-        re_write = 0
+def generation(pcap_path, samples, features, splitcap,  dataset_save_path, dataset_level, payload_length = 128 , payload_packet = 5):
 
-        if clean_dataset:
-            with open(dataset_save_path + "\\dataset.json", "r") as f:
-                new_dataset = json.load(f)
-            pop_keys = ['1','10','16','23','25','71']
-            print("delete domains.")
-            for p_k in pop_keys:
-                print(new_dataset.pop(p_k))
-            
-            change_keys = [str(x) for x in range(113, 119)]
-            relation_dict = {}
-            for c_k_index in range(len(change_keys)):
-                relation_dict[change_keys[c_k_index]] = pop_keys[c_k_index]
-                new_dataset[pop_keys[c_k_index]] = new_dataset.pop(change_keys[c_k_index])
-            with open(dataset_save_path + "\\dataset.json", "w") as f:
-                json.dump(new_dataset, fp=f, ensure_ascii=False, indent=4)
-        elif re_write:
-            with open(dataset_save_path + "\\dataset.json", "r") as f:
-                old_dataset = json.load(f)
-            os.renames(dataset_save_path + "\\dataset.json", dataset_save_path + "\\old_dataset.json")
-            with open(dataset_save_path + "\\new-samples.txt", "r") as f:
-                source_samples = f.read().split('\n')
-            new_dataset = {}
-            samples_count = 0
-            for i in range(len(source_samples)):
-                current_class = source_samples[i].split('\t')
-                if int(current_class[1]) > 9:
-                    new_dataset[str(samples_count)] = old_dataset[str(i)]
-                    samples_count += 1
-                    print(old_dataset[str(i)]['samples'])
-            with open(dataset_save_path + "\\dataset.json", "w") as f:
-                json.dump(new_dataset, fp=f, ensure_ascii=False, indent=4)
-        X, Y = obtain_data(pcap_path, samples, features, dataset_save_path)
-        return X,Y
 
     dataset = {}
     
@@ -275,14 +300,14 @@ def generation(pcap_path, samples, features, splitcap = False, payload_length = 
                     shutil.copyfile(file, os.path.join(current_path, new_name))
 
         for dir in label_name_list:
-            for p,dd,ff in os.walk(parent + "\\" + dir):
+            for p,dd,ff in os.walk(parent + "/" + dir):
                 
                 if splitcap:
                     for file in ff:
                         session_path = (split_cap(pcap_path, p + "\\" + file, file.split(".")[-2], dir, dataset_level = dataset_level))
                     session_pcap_path[dir] = pcap_path + "\\splitcap\\" + dir
                 else:
-                    session_pcap_path[dir] = pcap_path + dir
+                    session_pcap_path[dir] = pcap_path +"/"+ dir
         break
 
     label_id = {}
@@ -299,11 +324,11 @@ def generation(pcap_path, samples, features, splitcap = False, payload_length = 
             if splitcap:
                 for p, d, f in os.walk(session_pcap_path[key]):
                     for file in f:
-                        file_size = float(size_format(os.path.getsize(p + "\\" + file)))
+                        file_size = float(size_format(os.path.getsize(p + "/" + file)))
                         # 2KB
                         if file_size < 5:
-                            os.remove(p + "\\" + file)
-                            print("remove sample: %s for its size is less than 5 KB." % (p + "\\" + file))
+                            os.remove(p + "/" + file)
+                            print("remove sample: %s for its size is less than 5 KB." % (p + "/" + file))
 
             if label_id[key] not in dataset:
                 dataset[label_id[key]] = {
@@ -318,29 +343,29 @@ def generation(pcap_path, samples, features, splitcap = False, payload_length = 
             if splitcap:# not splitcap
                 for p, d, f in os.walk(session_pcap_path[key]):
                     for file in f:
-                        current_file = p + "\\" + file
+                        current_file = p + "/" + file
                         if not os.path.getsize(current_file):
                             os.remove(current_file)
                             print("current pcap %s is 0KB and delete"%current_file)
                         else:
-                            current_packet = scapy.rdpcap(p + "\\" + file)
-                            file_size = float(size_format(os.path.getsize(p + "\\" + file)))
+                            current_packet = scapy.rdpcap(p + "/" + file)
+                            file_size = float(size_format(os.path.getsize(p + "/" + file)))
                             try:
                                 if 'TCP' in str(current_packet.res):
                                     # 0.12KB
                                     if file_size < 0.14:
-                                        os.remove(p + "\\" + file)
+                                        os.remove(p + "/" + file)
                                         print("remove TCP sample: %s for its size is less than 0.14KB." % (
-                                                    p + "\\" + file))
+                                                    p + "/" + file))
                                 elif 'UDP' in str(current_packet.res):
                                     if file_size < 0.1:
-                                        os.remove(p + "\\" + file)
+                                        os.remove(p + "/" + file)
                                         print("remove UDP sample: %s for its size is less than 0.1KB." % (
-                                                    p + "\\" + file))
+                                                    p + "/" + file))
                             except Exception as e:
                                 print("error in data_generation 611: scapy read pcap and analyse error")
-                                os.remove(p + "\\" + file)
-                                print("remove packet sample: %s for reading error." % (p + "\\" + file))
+                                os.remove(p + "/" + file)
+                                print("remove packet sample: %s for reading error." % (p + "/" + file))
             if label_id[key] not in dataset:
                 dataset[label_id[key]] = {
                     "samples": 0,
@@ -349,8 +374,10 @@ def generation(pcap_path, samples, features, splitcap = False, payload_length = 
         if splitcap:
             continue
 
-        target_all_files = [x[0] + "\\" + y for x in [(p, f) for p, d, f in os.walk(session_pcap_path[key])] for y in x[1]]
-        r_files = random.sample(target_all_files, samples[label_count])
+        target_all_files = [x[0] + "/" + y for x in [(p, f) for p, d, f in os.walk(session_pcap_path[key])] for y in x[1]]
+        #r_files = random.sample(target_all_files, samples[label_count])
+        r_files = target_all_files[:10]  # Select only the first file
+        print(r_files)
         label_count += 1
         for r_f in r_files:
             if dataset_level == "flow":
@@ -388,11 +415,11 @@ def generation(pcap_path, samples, features, splitcap = False, payload_length = 
         all_data_number += dataset[label_id[label_name_list[index]]]["samples"]
     print("all\t%d"%(all_data_number))
 
-    with open(dataset_save_path + "\\picked_file_record","w") as p_f:
+    with open(dataset_save_path + "/picked_file_record","w") as p_f:
         for i in r_file_record:
             p_f.write(i)
             p_f.write("\n")
-    with open(dataset_save_path + "\\dataset.json", "w") as f:
+    with open(dataset_save_path + "/dataset.json", "w") as f:
         json.dump(dataset,fp=f,ensure_ascii=False,indent=4)
 
     X,Y = obtain_data(pcap_path, samples, features, dataset_save_path, json_data = dataset)
