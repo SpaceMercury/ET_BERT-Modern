@@ -7,3 +7,5 @@ python3 inference/run_classifier_infer.py --load_model_path models/finetuned_mod
                                           --prediction_path ./prediction.tsv \
                                           --labels_num 2 \
                                           --embedding word_pos_seg --encoder transformer --mask fully_visible
+
+python3 data_process/generate_results.py
