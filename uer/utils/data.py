@@ -2,6 +2,7 @@ import os
 import random
 import pickle
 import torch
+from tqdm import tqdm
 from multiprocessing import Pool
 from uer.utils.constants import *
 from uer.utils.tokenizers import *
@@ -154,7 +155,7 @@ def get_span_len(max_span_len, p):
 def merge_dataset(dataset_path, workers_num):
     # Merge datasets.
     dataset_writer = open(dataset_path, "wb")
-    for i in range(workers_num):
+    for i in tqdm(range(workers_num)):
         tmp_dataset_reader = open("dataset-tmp-" + str(i) + ".pt", "rb")
         while True:
             tmp_data = tmp_dataset_reader.read(2^20)
@@ -210,13 +211,13 @@ class Dataset(object):
             self.worker(0, 0, lines_num)
         else:
             pool = Pool(workers_num)
-            for i in range(workers_num):
+            for i in tqdm(range(workers_num)):
                 start = i * lines_num // workers_num
                 end = (i + 1) * lines_num // workers_num
                 pool.apply_async(func=self.worker, args=[i, start, end])
             pool.close()
             pool.join()
-
+        print("All workers have finished, now merging.")
         # Merge datasets.
         merge_dataset(self.dataset_path, workers_num)
 

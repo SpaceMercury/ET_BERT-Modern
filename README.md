@@ -1,3 +1,36 @@
+# ET-BERT-Modern : An updated and ready to run version of ET-BERT for linux systems 
+
+
+ET-BERT-Modern is a streamlined and updated fork of the original ET-BERT repository, created in response to numerous issues encountered while running the original codebase — including outdated dependencies, broken scripts, and limited documentation. This version has been modernized to work smoothly on Linux systems, with updated libraries, cleaner and more maintainable code, and significantly improved documentation to make setup and experimentation easier for new users and researchers alike.
+
+
+## Environment setup:
+
+This was tested on an NVIDIA A30 GPU, running CUDA 12.8. The original repo runs a much older cuda version 11.4. To install, create a new environment, we used conda:
+
+conda create -n bertEnv
+
+And install all of the packages from the requirements.txt file.
+
+You should also make sure you have the cuda drivers installed before for your GPU.
+
+
+## Running:
+
+
+
+
+This repo is not meant to be pre-trained again, we use the already provided pretrained.bin file from the original repo. It is meant to be able to be finetuned quickly as well as tested with different pcaps.
+
+In the pcaps folder create a folder for each application category you want to test. In there put all your pcap files for that specific category/label.
+
+Then you can run the finetune.sh script which will first run generate_testing and then proceed to run the finetuning/run_classifier function. This will create a finetuned model bin named finetuned_model.bin.
+
+To run it you can just run predict.sh which given a pcap with a label will generate the .tsv file, feed it to the model for inference, and finally print statistics.
+
+
+
+
 # ET-BERT: A Contextualized Datagram Representation with Pre-training Transformers for Encrypted Traffic Classification
 
 <!-- 

@@ -3,3 +3,7 @@
 *.bin
 
 /adobePcaps
+
+*/__pycache__/
+
+*.pyc
