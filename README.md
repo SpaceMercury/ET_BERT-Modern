@@ -28,12 +28,55 @@ This repo is not meant to be pre-trained again, we use the already provided `pre
 
 Find the `pretrained.bin` file: [Using ET-BERT](#using-et-bert)
 
-In the pcaps folder create a folder for each application category you want to test. In there put all your pcap files for that specific category/label.
+Organizing PCAP Files
+To prepare your data for testing or fine-tuning, organize your PCAP files as follows:
 
-Then you can run the finetune.sh script which will first run generate_testing and then proceed to run the finetuning/run_classifier function. This will create a finetuned model bin named finetuned_model.bin.
+1. Create a Folder for Each Application Category:
+Inside the pcaps directory, create a subfolder for each application category you want to test. For example:
+```
+pcaps/
+├── adobe/
+│   ├── file1.pcap
+│   ├── file2.pcap
+├── youtube/
+│   ├── file1.pcap
+│   ├── file2.pcap
+```
 
-To run it you can just run predict.sh which given a pcap with a label will generate the .tsv file, feed it to the model for inference, and finally print statistics.
+2. Place PCAP Files in the Corresponding Folders:
+Add all PCAP files for a specific category into its respective folder.
 
+---
+
+Running the Scripts
+1. Fine-Tuning
+Run the `finetune.sh` script to:
+
+- Generate testing data using the generate_testing.py script.
+- Fine-tune the model using the finetuning/run_classifier function.
+
+This process will create a fine-tuned model named finetuned_model.bin.
+
+2. Inference
+To perform inference, use the `predict.sh` script. This script:
+
+Takes a PCAP file with a label.
+Generates a `.tsv` file.
+Feeds the `.tsv` file to the model for inference.
+Outputs statistics for the predictions.
+
+---
+
+Example Workflow
+1. Organize your PCAP files as described above.
+2. Run the following command to fine-tune the model:
+```
+./finetune.sh
+```
+3. After fine-tuning, use the following command to perform inference:
+```
+./predict.sh
+```
 
 
 
