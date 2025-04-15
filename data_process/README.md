@@ -1,41 +1,88 @@
-## Description of processing PCAP files to generate dataset
-For PCAP data, it is recommended to clean it first. Since the program processing logic is not smooth, we detail the data pre-processing for pre-training and fine-tuning as followed.
+## Overview
 
-### Pre-training Stage
-*Main Program*: dataset_generation.py
+The `generate_testing.py` script is a preprocessing tool that converts network packet captures (PCAP files) into text-based datasets suitable for training and evaluating machine learning models, particularly for the ET-BERT project. It extracts payload data from network traffic and transforms it into a format compatible with BERT-style transformer models.
 
-*Functions*: pretrain_dataset_generation, get_burst_feature
+## Key Features
+Processes both individual PCAP files and directories containing multiple PCAPs
 
-1. Initialization. 
-Set the variable `pcap_path` (line:616) as the directory of PCAP data to be processed. 
-Set the variable `word_dir` (line:23) and `word_name` (line:24) as the storage directory of pre-training daraset.
+Supports both packet-level and flow-level analysis
 
-2. Pre-process PCAP. 
-Set the variable `output_split_path` (line:583) and `pcap_output_path` (line:584). 
-The `pcap_output_path` indicates the storage directory where the pcapng format of PCAP data is converted to pcap format. 
-The `output_split_path` represents the storage directory for PCAP data slicing into session format. 
+Automatically assigns numeric labels based on folder structure
 
-3. Gnerate Pre-training Datasets. 
-Following the completion of PCAP data processing, the program generates a pre-training dataset composed of BURST.
+Creates TSV files with labeled data for training, validation, and testing
 
-### Fine-tuning Stage
-*Main Program*: main.py
+Generates unlabeled datasets for inference
 
-*Functions*: data_preprocess.py, dataset_generation.py, open_dataset_deal.py, dataset_cleanning.py
 
-The key idea of the fine-tuning phase when processing public PCAP datasets is to first distinguish folders for different labeled data in the dataset, then perform session slicing on the data, and finally generate packet-level or flow-level datasets according to sample needs.
+## Core Functionality
 
-**Note:** Due to the complexity of the possible existence of raw PCAP data, it is recommended that the following steps be performed to check the code execution when it reports an error.
+Data Extraction Methods
 
-1. Initialization. 
-`pcap_path`, `dataset_save_path`, `samples`, `features`, `dataset_level` (line:28) are the basis variables, which represent the original data directory, the stored generated data directory, the number of samples, the feature type, and the data level. `open_dataset_not_pcap` (line:215)  represents the processing of converting PCAP data to pcap format, e.g. pcapng to pcap. 
-And `file2dir` (line:226) represents the generation of category directories to store PCAP data when a pcap file is a category. 
+1. Packet-Level Processing: Extracts individual packets and processes them independently
+- Function: `get_feature_packet()`
+- Each packet becomes a separate data point
+2. Flow-Level Processing: Groups packets into flows based on the 5-tuple (source IP, destination IP, source port, destination port, protocol)
+- Function: `get_feature_flow()`
+- Multiple packets from the same flow are combined
 
-2. Pre-process. 
-The data pre-processing is primarily to split the PCAP data in the directory into session data. 
-Please set the `splitcap_finish` parameter to 0 to initialize the sample number array, and the value of `sample` set at this time should not exceed the minimum number of samples. 
-Then you can set `splitcap=True` (line:54) and run the code for splitting PCAP data. The splitted sessions will be saved in `pcap_path\\splitcap`.
 
-3. Generation. 
-After data pre-processing is completed, variables need to be changed for generating fine-tuned training data. The `pcap_path` should be the path of splitted data and set 
-`splitcap=False`. Now the `sample` can be unrestricted by the minimum sample size. The `open_dataset_not_pcap` and `file2dir` should be False. Then the dataset for fine-tuning will be generated and saved in `dataset_save_path`. 
+### Data Transformation
+The script transforms raw binary packet data into a text format through:
+
+1. Hexlification: Converts binary data to hexadecimal representation
+2. Payload Extraction: Removes packet headers (first 76 hex characters)
+3. Bigram Generation: Creates bigrams (pairs of adjacent hex characters)
+    - Function: bigram_generation()
+    - Example: "abcdef" becomes "ab bc cd de ef"
+
+
+### Dataset Creation
+The script can:
+
+1. Create datasets from existing categorized directories (training mode)
+2. Process a single PCAP file with a specified label (testing mode)
+
+## Usage
+Command Line Arguments
+
+```
+python generate_testing.py [options]
+```
+
+
+Options:
+
+- `--pcap_path`: Path to folder containing organized PCAP files
+- `--pcap_file`: Path to an individual PCAP file
+
+- `--label`: Label for a single PCAP file
+
+- `--output_dir`: Directory to save TSV files (default: current directory)
+
+- `--type`: Dataset type (test, train, valid) (default: test)
+
+- `--max_packets`: Maximum packets to process per category (default: 0 = unlimited)
+
+- `--dataset_level`: Level of analysis - packet or flow (default: packet)
+- `--payload_length`: Maximum length of payload to extract (default: 64)
+- `--training`: Flag to enable training mode (split data into train/valid/test)
+
+
+Example Usage
+
+Process a single PCAP file:
+```
+python generate_testing.py --pcap_file path/to/capture.pcap --label 0 --type test
+```
+
+Process multiple PCAPSs for training:
+```
+python generate_testing.py --pcap_path path/to/pcap/directory --training --dataset_level packet --payload_length 128 --output_dir ./output
+```
+
+Output Files
+The script produces:
+
+Labeled TSV Files: Format <type>_dataset.tsv with "label" and "text_a" columns
+Unlabeled TSV Files: Format <type>_nolabel_dataset.tsv with only "text_a" column
+Label Mapping File: label_map_file.txt showing the correspondence between numeric labels and folder names
