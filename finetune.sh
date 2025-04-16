@@ -1,4 +1,4 @@
-python3 data_process/generate_testing.py --dataset_level packet --max_packets 5000 --pcap_path ./adobePcaps --training
+python3 data_process/generate_testing.py --dataset_level packet --max_packets 5000 --pcap_path ./vpns --training
 
 PYTHONPATH=. python3 fine_tuning/run_classifier.py --pretrained_model_path models/pre-trained_model.bin \
                                    --vocab_path models/encryptd_vocab.txt \

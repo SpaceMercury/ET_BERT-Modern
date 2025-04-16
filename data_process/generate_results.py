@@ -12,7 +12,7 @@ def load_predicted_labels(pred_file):
 
 def main():
 
-    pol_test_path = "./test_dataset.tsv"
+    pol_test_path = "./predict_test_dataset.tsv"
     pol_pred_path = "./prediction.tsv"
 
     test_path = "datasets/cstnet-tls1.3/packet/test_dataset.tsv"

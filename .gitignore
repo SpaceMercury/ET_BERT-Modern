@@ -5,5 +5,15 @@
 /adobePcaps
 
 */__pycache__/
+/__pycache__/
+
 
 *.pyc
+
+*.pcap
+
+*.npy
+
+*.tsv
+
+*.txt

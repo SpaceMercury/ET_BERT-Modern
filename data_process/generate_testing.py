@@ -54,7 +54,7 @@ def get_feature_flow(label_pcap, payload_len, payload_pac):
                 if packet_count == payload_pac:
                     packet_data = packet.copy()
                     data = (binascii.hexlify(bytes(packet_data)))
-                    packet_string = data.decode()[76:]  # Limit string length
+                    packet_string = data.decode()[76:]  
                     flow_data_string += bigram_generation(packet_string, packet_len=payload_len, flag=True)
                     break
                 else:
@@ -300,7 +300,7 @@ def main():
         for payload, label in zip(payloads, labels):
             dataset_file.append([label, payload])
 
-        tsv_path = os.path.join(args.output_dir, f"{args.type}_dataset.tsv")
+        tsv_path = os.path.join(args.output_dir, f"predict_{args.type}_dataset.tsv")
         with open(tsv_path, 'w', newline='') as f:
             tsv_w = csv.writer(f, delimiter='\t')
             tsv_w.writerows(dataset_file)
