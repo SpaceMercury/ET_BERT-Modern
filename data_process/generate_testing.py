@@ -70,20 +70,53 @@ def get_feature_flow(label_pcap, payload_len, payload_pac):
         return -1
 
 
-def get_feature_packet(label_pcap, payload_len, max_pkt_total=5000):
+def get_feature_packet(label_pcap, payload_len, max_pkt_total=5000, remove_header=False):
     feature_data = []
     max_pkts = 0
     packets = scapy.rdpcap(label_pcap)
     
     for packet in packets:
 
+        if not (scapy.IP in packet and (scapy.TCP in packet or scapy.UDP in packet)):
+            continue
+
+
+        #is packet tcp then it needs to be 0.14
+        if scapy.TCP in packet:
+            if (len(packet)/1024) < 0.14:
+                continue
+        elif scapy.UDP in packet:
+            if (len(packet)/1024) < 0.1:
+                continue
+
+
+        #print(packet)
         if max_pkts >= max_pkt_total:
             break
         max_pkts += 1
         packet_data = packet.copy()
         data = binascii.hexlify(bytes(packet_data))
         packet_string = data.decode()
-        new_packet_string = packet_string[76:]
+
+        
+        if remove_header:
+            if scapy.TCP in packet:
+                # Access the payload directly after the TCP header (including options)
+                payload_layer = packet[scapy.TCP].payload
+                if payload_layer:
+                    payload_bytes = bytes(payload_layer)
+                    new_packet_string = binascii.hexlify(payload_bytes).decode()
+
+            elif scapy.UDP in packet:
+                 # Access the payload directly after the UDP header
+                 payload_layer = packet[scapy.UDP].payload
+                 if payload_layer:
+                    payload_bytes = bytes(payload_layer)
+                    new_packet_string = binascii.hexlify(payload_bytes).decode()
+
+        else:
+            new_packet_string = packet_string[76:]
+
         # Append each packet's bigram transformation as a separate payload
         payload_string = bigram_generation(new_packet_string, packet_len=payload_len, flag=True)
         feature_data.append(payload_string)
@@ -128,7 +161,7 @@ def size_format(size):
     file_size = '%.3f' % float(size/1000)
     return file_size
 
-def extract_all_pcaps(base_path, dataset_level='packet', payload_len=64, payload_pkts=5, max_packets_per_category=None):
+def extract_all_pcaps(base_path, dataset_level='packet', payload_len=64, payload_pkts=5, max_packets_per_category=None, remove_header=False):
     """Iterate over all folders, collect all PCAP files, and process them with numeric labels."""
     payloads = []
     labels = []
@@ -157,7 +190,7 @@ def extract_all_pcaps(base_path, dataset_level='packet', payload_len=64, payload
                 try:
                     if dataset_level == 'packet':
                         # Packet-level processing
-                        result = get_feature_packet(pcap_file, payload_len)
+                        result = get_feature_packet(pcap_file, payload_len, remove_header=remove_header)
                     elif dataset_level == 'flow':
                         # Flow-level processing
                         result = get_feature_flow(pcap_file, payload_len, payload_pkts)
@@ -232,6 +265,7 @@ def main():
                         help="Level of analysis (packet or flow)")
     parser.add_argument("--payload_length", type=int, default=64, help="Maximum length of payload to extract")
     parser.add_argument("--training", action='store_true', help="Flag to indicate if training, validation, and test split is needed")
+    parser.add_argument("--remove-header", action='store_true', help="will cut the headers of the packets")
     
     args = parser.parse_args()
     
@@ -239,15 +273,14 @@ def main():
     os.makedirs(args.output_dir, exist_ok=True)
 
 
-
     if args.training:
 
         if args.dataset_level == "packet":
             print(f"Extracting payloads from {args.pcap_path}...")
-            payloads, labels = extract_all_pcaps(args.pcap_path, dataset_level='packet', payload_len=args.payload_length, max_packets_per_category=args.max_packets)
+            payloads, labels = extract_all_pcaps(args.pcap_path, dataset_level='packet', payload_len=args.payload_length, max_packets_per_category=args.max_packets, remove_header=args.remove_header)
         elif args.dataset_level == "flow":
             print(f"Extracting payloads from {args.pcap_path}...")
-            payloads, labels = extract_all_pcaps(args.pcap_path, dataset_level='flow', payload_len=args.payload_length, payload_pkts=5, max_packets_per_category=args.max_packets)
+            payloads, labels = extract_all_pcaps(args.pcap_path, dataset_level='flow', payload_len=args.payload_length, payload_pkts=5, max_packets_per_category=args.max_packets, remove_header=args.remove_header)
 
 
         print(f"Extracted {len(payloads)} payloads")
@@ -290,7 +323,7 @@ def main():
             # Use the provided label if specified
             if args.label:
                 numeric_label = args.label
-                payloads = get_feature_packet(args.pcap_file, payload_len=args.payload_length)
+                payloads = get_feature_packet(args.pcap_file, payload_len=args.payload_length, remove_header=args.remove_header)
                 labels = [numeric_label] * len(payloads)  # Assign the same label to all payloads
         else:
             return

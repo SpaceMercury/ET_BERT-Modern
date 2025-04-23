@@ -1,5 +1,7 @@
 import csv
 from sklearn.metrics import classification_report, accuracy_score
+import argparse
+from sklearn.metrics import precision_score, recall_score, f1_score
 
 def load_true_labels(test_file):
     with open(test_file, newline='') as f:
@@ -11,21 +13,29 @@ def load_predicted_labels(pred_file):
         return [int(line.strip()) for line in f if line.strip().isdigit()]
 
 def main():
+    parser = argparse.ArgumentParser(description='Evaluate classification results.')
+    parser.add_argument('--test-file', type=str, required=True, help='Path to the test file')
+    parser.add_argument('--pred-file', type=str, required=True, help='Path to the prediction file')
+    args = parser.parse_args()
 
-    pol_test_path = "./predict_test_dataset.tsv"
-    pol_pred_path = "./prediction.tsv"
-
-    test_path = "datasets/cstnet-tls1.3/packet/test_dataset.tsv"
-    pred_path = "datasets/cstnet-tls1.3/packet/prediction.tsv"
-
-    y_true = load_true_labels(pol_test_path)
-    y_pred = load_predicted_labels(pol_pred_path)
+    y_true = load_true_labels(args.test_file)
+    y_pred = load_predicted_labels(args.pred_file)
 
     assert len(y_true) == len(y_pred), "Mismatch in number of samples!"
 
+
+    AC = accuracy_score(y_true, y_pred)
+    PR = precision_score(y_true, y_pred, average='macro')
+    RC = recall_score(y_true, y_pred, average='macro')
+    F1 = f1_score(y_true, y_pred, average='macro')
+
+    print(f"Accuracy (AC): {AC:.4f}")
+    print(f"Precision (PR): {PR:.4f}")
+    print(f"Recall (RC): {RC:.4f}")
+    print(f"F1 Score: {F1:.4f}")
+    
     print("Accuracy:", accuracy_score(y_true, y_pred))
     print("\nDetailed Report:\n")
-    print(classification_report(y_true, y_pred, digits=4))
 
 if __name__ == "__main__":
     main()
