@@ -6,7 +6,17 @@
   <a href='https://dl.acm.org/doi/10.1145/3485447.3512217' target='_blank'><img src="https://img.shields.io/badge/WWW'22-Paper-blue"></a>
 </p>
 
-ET-BERT-Modern is a streamlined and updated fork of the original ET-BERT repository, created in response to numerous issues encountered while running the original codebase — including outdated dependencies, broken scripts, and limited documentation. This version has been modernized to work smoothly on Linux systems, with updated libraries, cleaner and more maintainable code, and significantly improved documentation to make setup and experimentation easier for new users and researchers alike.
+ET-BERT-Modern is a streamlined and updated fork of the original ET-BERT repository, created in response to numerous issues encountered while running the original codebase — including outdated dependencies, broken scripts, and limited documentation. This version has been modernized to work smoothly on Linux systems, with updated libraries, cleaner and more maintainable code, and significantly improved documentation to make setup and experimentation easier for new users and researchers alike. The intention of this repo was to explore the claims of ET-BERT in terms of accuracy and claims of how encryption was not random this leads to classification. However this was documented and published in the following [paper](https://arxiv.org/abs/2503.20093). This paper performs different tests on the CSTNET-TLS-1.3 as well as on their own dataset to show how the model fails under certain conditions.
+
+In addition to the paper we performed our own tests with the following results on the ISCX-2016-VPN dataset (filtering by applications):
+
+| Metric           | With TLS Header | Fully Removed Header |
+|------------------|-----------------|----------------------|
+| Accuracy (AC)    | 0.9974          | 0.1683               |
+| Precision (PR)   | 0.9978          | 0.3584               |
+| Recall (RC)      | 0.9954          | 0.2211               |
+| F1 Score         | 0.9966          | 0.1760               |
+
 
 
 ## Environment setup:
