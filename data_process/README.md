@@ -55,6 +55,7 @@ python generate_testing.py [options]
 Options:
 
 - `--pcap_path`: Path to folder containing organized PCAP files
+
 - `--pcap_file`: Path to an individual PCAP file
 
 - `--label`: Label for a single PCAP file
