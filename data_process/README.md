@@ -66,17 +66,21 @@ Options:
 - `--max_packets`: Maximum packets to process per category (default: 0 = unlimited)
 
 - `--dataset_level`: Level of analysis - packet or flow (default: packet)
+
 - `--payload_length`: Maximum length of payload to extract (default: 64)
-- `--training`: Flag to enable training mode (split data into train/valid/test)
+
+- `--training`: Flag to enable training mode, you have to give a folder instead of a file
+
+- `--no-header` : No header flag will process the packets completely removing the Eth, IP, TCP headers (unlike original paper)
 
 
-Example Usage
+
+Example Usage:
 
 Process a single PCAP file:
 ```
 python generate_testing.py --pcap_file path/to/capture.pcap --label 0 --type test
 ```
-
 Process multiple PCAPSs for training:
 ```
 python generate_testing.py --pcap_path path/to/pcap/directory --training --dataset_level packet --payload_length 128 --output_dir ./output
