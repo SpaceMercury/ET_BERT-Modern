@@ -30,10 +30,12 @@ Data Extraction Methods
 The script transforms raw binary packet data into a text format through:
 
 1. Hexlification: Converts binary data to hexadecimal representation
-2. Payload Extraction: Removes packet headers (first 76 hex characters)
+2. Payload Extraction: Removes packet headers
+    - First 76 hex characters like in the paper
+    - or if you use the --no-header option to just fully remove the headers
 3. Bigram Generation: Creates bigrams (pairs of adjacent hex characters)
     - Function: bigram_generation()
-    - Example: "abcdef" becomes "ab bc cd de ef"
+    - Example: "abcdef" becomes "abbc bccd cdde deef"
 
 
 ### Dataset Creation

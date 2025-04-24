@@ -69,6 +69,10 @@ Add all PCAP files for a specific category into its respective folder.
 
 ---
 
+Before continuning you might want to take a look at the [data_process_readme](./data_process/README.md)
+
+---
+
 Running the Scripts
 1. Fine-Tuning
 Run the `finetune.sh` script to:
@@ -88,7 +92,7 @@ Outputs statistics for the predictions.
 
 ---
 
-Example Workflow
+**Example Workflow**
 1. Organize your PCAP files as described above.
 2. Run the following command to fine-tune the model:
 ```
