@@ -10,12 +10,12 @@ ET-BERT-Modern is a streamlined and updated fork of the original ET-BERT reposit
 
 In addition to the paper we performed our own tests with the following results on the ISCX-2016-VPN dataset (filtering by applications):
 
-| Metric           | With TLS Header | Fully Removed Header |
-|------------------|-----------------|----------------------|
-| Accuracy (AC)    | 0.9974          | 0.1683               |
-| Precision (PR)   | 0.9978          | 0.3584               |
-| Recall (RC)      | 0.9954          | 0.2211               |
-| F1 Score         | 0.9966          | 0.1760               |
+| Metric           | Original data processing with part of TCP header | Fully Removed Header |
+|------------------|-------------------------|----------------------|
+| Accuracy (AC)    | 0.9974                  | 0.1683               |
+| Precision (PR)   | 0.9978                  | 0.3584               |
+| Recall (RC)      | 0.9954                  | 0.2211               |
+| F1 Score         | 0.9966                  | 0.1760               |
 
 
 
