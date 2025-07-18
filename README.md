@@ -6,7 +6,7 @@
   <a href='https://dl.acm.org/doi/10.1145/3485447.3512217' target='_blank'><img src="https://img.shields.io/badge/WWW'22-Paper-blue"></a>
 </p>
 
-ET-BERT-Modern is a streamlined and updated fork of the original ET-BERT repository, created in response to numerous issues encountered while running the original codebase — including outdated dependencies, broken scripts, and limited documentation. 
+ET-BERT-Modern is a streamlined and updated fork of the original ![ET-BERT](https://github.com/linwhitehat/ET-BERT) repository, created in response to numerous issues encountered while running the original codebase — including outdated dependencies, broken scripts, and limited documentation. 
 
 This version has been modernized to work smoothly on Linux systems, with updated libraries, cleaner and more maintainable code, and significantly improved documentation to make setup and experimentation easier for new users and researchers alike. 
 
